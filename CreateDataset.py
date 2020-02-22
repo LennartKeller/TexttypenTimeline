@@ -68,4 +68,4 @@ def parse_texts(files: str, out_filename: str = "dataset.csv") -> Dict[str, str]
 if __name__ == '__main__':
     files = get_xml_files('korpus')
     print(len(files))
-    parse_texts(filesg)
+    parse_texts(files)
