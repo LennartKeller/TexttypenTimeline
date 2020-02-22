@@ -20,16 +20,20 @@ def parse_texts(files: str, out_filename: str = "dataset.csv") -> Dict[str, str]
     """
     ns = {'tei': 'http://www.tei-c.org/ns/1.0'}
     out_file = open(out_filename, 'a', encoding='UTF-8')
-    csv_writer = DictWriter(out_file, fieldnames=['file', 'title', 'author', 'text', 'main_type', 'sub_type'])
+    csv_writer = DictWriter(out_file, fieldnames=['file', 'title', 'author', 'text', 'main_type', 'sub_type', 'year'])
     csv_writer.writeheader()
     
     for file in tqdm(files, desc='Processing XML-Files ...'):
         xml = et.parse(file)
         entry = {'file': os.path.basename(file)}
         
-        title = xml.xpath('//tei:titleStmt/tei:title[@type="main"]/text()', namespaces=ns)[0]
-        #_raise_invalid_field_warning(title, 'title', file)
-        entry['title'] = title
+        try:
+            title = xml.xpath('//tei:titleStmt/tei:title[@type="main"]/text()', namespaces=ns)[0]
+            entry['title'] = title
+        except Exception:
+            _raise_invalid_field_warning(None, 'title', file)
+            continue
+        
 
         author_surname = list(set(xml.xpath('//tei:author[1]/tei:persName/tei:surname/text()', namespaces=ns)))
         _raise_invalid_field_warning(author_surname, 'author_surname', file)
@@ -49,6 +53,14 @@ def parse_texts(files: str, out_filename: str = "dataset.csv") -> Dict[str, str]
         sub_type =  " ".join(xml.xpath('//tei:textClass/tei:classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]/text()', namespaces=ns))
         _raise_invalid_field_warning(sub_type, 'sub_type', file)
         entry['sub_type'] = sub_type
+        
+        try:
+            year =  list(set(xml.xpath('//tei:publicationStmt/tei:date[@type="publication"]/text()', namespaces=ns)))[0]
+            entry['year'] = year
+        except Exception:
+            _raise_invalid_field_warning(None, 'year', out_file)
+            continue
+        
 
         csv_writer.writerow(entry)
     return
@@ -56,4 +68,4 @@ def parse_texts(files: str, out_filename: str = "dataset.csv") -> Dict[str, str]
 if __name__ == '__main__':
     files = get_xml_files('korpus')
     print(len(files))
-    parse_texts(files)
+    parse_texts(filesg)
